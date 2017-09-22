@@ -1,0 +1,13 @@
+Index: webkitgtk-2.18.0/Source/cmake/OptionsGTK.cmake
+===================================================================
+--- webkitgtk-2.18.0.orig/Source/cmake/OptionsGTK.cmake
++++ webkitgtk-2.18.0/Source/cmake/OptionsGTK.cmake
+@@ -293,7 +293,7 @@ SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPP
+ if (ENABLE_OPENGL)
+     # ENABLE_OPENGL is true if either USE_OPENGL or ENABLE_GLES2 is true.
+     # But USE_OPENGL is the opposite of ENABLE_GLES2.
+-    if (ENABLE_GLES2)
++    if (ENABLE_GLES2_DEFAULT)
+         find_package(OpenGLES2 REQUIRED)
+         SET_AND_EXPOSE_TO_BUILD(USE_OPENGL_ES_2 TRUE)
+ 

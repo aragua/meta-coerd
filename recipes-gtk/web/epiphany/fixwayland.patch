@@ -1,0 +1,151 @@
+Index: epiphany-3.24.3/configure.ac
+===================================================================
+--- epiphany-3.24.3.orig/configure.ac
++++ epiphany-3.24.3/configure.ac
+@@ -104,7 +104,7 @@ PKG_CHECK_MODULES([GDK], [gdk-3.0 >= $GT
+ PKG_CHECK_MODULES([GDK_PIXBUF], [gdk-pixbuf-2.0 >= 2.36.5])
+ PKG_CHECK_MODULES([GIO_UNIX], [gio-unix-2.0 >= $GLIB_REQUIRED])
+ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= $GLIB_REQUIRED])
+-PKG_CHECK_MODULES([GNOME_DESKTOP], [gnome-desktop-3.0 >= 2.91.2])
++#PKG_CHECK_MODULES([GNOME_DESKTOP], [gnome-desktop-3.0 >= 2.91.2])
+ PKG_CHECK_MODULES([GTK], [gtk+-3.0 >= $GTK_REQUIRED])
+ PKG_CHECK_MODULES([GTK_UNIX_PRINT], [gtk+-unix-print-3.0 >= $GTK_REQUIRED])
+ PKG_CHECK_MODULES([ICU_UC], [icu-uc >= 4.6])
+Index: epiphany-3.24.3/lib/ephy-snapshot-service.c
+===================================================================
+--- epiphany-3.24.3.orig/lib/ephy-snapshot-service.c
++++ epiphany-3.24.3/lib/ephy-snapshot-service.c
+@@ -26,14 +26,14 @@
+ #ifndef GNOME_DESKTOP_USE_UNSTABLE_API
+ #define GNOME_DESKTOP_USE_UNSTABLE_API
+ #endif
+-#include <libgnome-desktop/gnome-desktop-thumbnail.h>
++//#include <libgnome-desktop/gnome-desktop-thumbnail.h>
+ #include <webkit2/webkit2.h>
+ 
+ struct _EphySnapshotService {
+   GObject parent_instance;
+ 
+   /* Disk cache */
+-  GnomeDesktopThumbnailFactory *factory;
++  //GnomeDesktopThumbnailFactory *factory;
+ 
+   /* Memory cache */
+   GHashTable *cache;
+@@ -91,7 +91,7 @@ ephy_snapshot_service_class_init (EphySn
+ static void
+ ephy_snapshot_service_init (EphySnapshotService *self)
+ {
+-  self->factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
++  //self->factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+   self->cache = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                        (GDestroyNotify)g_free,
+                                        (GDestroyNotify)snapshot_path_cached_data_free);
+@@ -265,17 +265,18 @@ save_snapshot_thread (GTask
+                       SnapshotAsyncData   *data,
+                       GCancellable        *cancellable)
+ {
+-  char *path;
+-
++  char *path = NULL;
++  /*
+   gnome_desktop_thumbnail_factory_save_thumbnail (service->factory,
+                                                   data->snapshot,
+                                                   data->url,
+                                                   data->mtime);
++  
+   g_idle_add (idle_emit_snapshot_saved, snapshot_async_data_copy (data));
+ 
+   path = gnome_desktop_thumbnail_path_for_uri (data->url, GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+   cache_snapshot_data_in_idle (service, data->url, path, SNAPSHOT_FRESH);
+-
++  */
+   g_task_return_pointer (task, path, g_free);
+ }
+ 
+@@ -521,8 +522,9 @@ get_snapshot_path_for_url_thread (GTask
+                                   SnapshotAsyncData   *data,
+                                   GCancellable        *cancellable)
+ {
+-  char *path;
++  char *path = NULL;
+ 
++  /*
+   path = gnome_desktop_thumbnail_factory_lookup (service->factory, data->url, data->mtime);
+   if (!path) {
+     g_task_return_new_error (task,
+@@ -533,7 +535,7 @@ get_snapshot_path_for_url_thread (GTask
+   }
+ 
+   cache_snapshot_data_in_idle (service, data->url, path, SNAPSHOT_STALE);
+-
++  */
+   g_task_return_pointer (task, path, g_free);
+ }
+ 
+Index: epiphany-3.24.3/src/ephy-shell.c
+===================================================================
+--- epiphany-3.24.3.orig/src/ephy-shell.c
++++ epiphany-3.24.3/src/ephy-shell.c
+@@ -44,7 +44,11 @@
+ #include "window-commands.h"
+ 
+ #include <glib/gi18n.h>
++#if defined (GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
+ #include <gtk/gtk.h>
+ 
+ #ifdef ENABLE_SYNC
+Index: epiphany-3.24.3/src/ephy-window.c
+===================================================================
+--- epiphany-3.24.3.orig/src/ephy-window.c
++++ epiphany-3.24.3/src/ephy-window.c
+@@ -53,7 +53,12 @@
+ #include "window-commands.h"
+ 
+ #include <gdk/gdkkeysyms.h>
+-#include <gdk/gdkx.h>
++#if defined (GDK_WINDOWING_QUARTZ)
++#include <gdk/gdkquartz.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
++
+ #include <gio/gio.h>
+ #include <glib/gi18n.h>
+ #include <gtk/gtk.h>
+Index: epiphany-3.24.3/src/ephy-lockdown.c
+===================================================================
+--- epiphany-3.24.3.orig/src/ephy-lockdown.c
++++ epiphany-3.24.3/src/ephy-lockdown.c
+@@ -243,10 +243,11 @@ window_added_cb (GtkApplication *applica
+ 
+   action = g_action_map_lookup_action (G_ACTION_MAP (action_group),
+                                        "set-image-as-background");
++  /*
+   settings = ephy_settings_get ("org.gnome.desktop.background");
+   g_settings_bind_writable (settings, "picture-filename",
+                             action, "enabled", FALSE);
+-
++  */
+   if (mode != EPHY_EMBED_SHELL_MODE_APPLICATION) {
+     location_controller = ephy_window_get_location_controller (EPHY_WINDOW (window));
+     bind_location_controller (EPHY_SETTINGS_LOCKDOWN, location_controller);
+Index: epiphany-3.24.3/src/popup-commands.c
+===================================================================
+--- epiphany-3.24.3.orig/src/popup-commands.c
++++ epiphany-3.24.3/src/popup-commands.c
+@@ -255,8 +255,10 @@ background_download_completed (EphyDownl
+   GSettings *settings;
+ 
+   uri = ephy_download_get_destination_uri (download);
++  /*
+   settings = ephy_settings_get ("org.gnome.desktop.background");
+   g_settings_set_string (settings, "picture-uri", uri);
++  */
+ }
+ 
+ void

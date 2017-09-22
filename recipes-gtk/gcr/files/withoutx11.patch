@@ -1,0 +1,134 @@
+Index: gcr-3.20.0/configure.ac
+===================================================================
+--- gcr-3.20.0.orig/configure.ac
++++ gcr-3.20.0/configure.ac
+@@ -116,7 +116,7 @@ AC_ARG_WITH(gtk, [
+ AM_CONDITIONAL(WITH_GTK, test "$with_gtk" != "no")
+ 
+ if test "x$with_gtk" != "xno"; then
+-	PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQ gtk+-x11-3.0 >= $GTK_REQ)
++	PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQ)
+ 	AC_SUBST(GTK_CFLAGS)
+ 	AC_SUBST(GTK_LIBS)
+ fi
+Index: gcr-3.20.0/ui/frob-prompt.c
+===================================================================
+--- gcr-3.20.0.orig/ui/frob-prompt.c
++++ gcr-3.20.0/ui/frob-prompt.c
+@@ -25,7 +25,11 @@
+ #include "gcr/gcr-base.h"
+ 
+ #include <gtk/gtk.h>
++#if defined (GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
+ 
+ #include <err.h>
+ 
+@@ -78,7 +82,11 @@ prompt_perform (GtkWidget *parent)
+ 		errx (1, "couldn't create prompt: %s", error->message);
+ 
+ 	if (parent) {
+-		caller_id = g_strdup_printf ("%lu", (gulong)GDK_WINDOW_XID (gtk_widget_get_window (parent)));
++#if defined (GDK_WINDOWING_X11)
++	  caller_id = g_strdup_printf ("%lu", (gulong)GDK_WINDOW_XID (gtk_widget_get_window (parent)));
++#elif defined (GDK_WINDOWING_WAYLAND)
++	  caller_id = g_strdup_printf ("%lu", (gulong)gdk_wayland_window_get_wl_surface (gtk_widget_get_window (parent)));
++#endif
+ 		gcr_prompt_set_caller_window (GCR_PROMPT (prompt), caller_id);
+ 		g_free (caller_id);
+ 	}
+Index: gcr-3.20.0/ui/frob-system-prompt.c
+===================================================================
+--- gcr-3.20.0.orig/ui/frob-system-prompt.c
++++ gcr-3.20.0/ui/frob-system-prompt.c
+@@ -26,7 +26,11 @@
+ #include "egg/egg-testing.h"
+ 
+ #include <gtk/gtk.h>
++#if defined (GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
+ 
+ #include <unistd.h>
+ #include <string.h>
+@@ -54,7 +58,11 @@ on_prompt_clicked (GtkToolButton *button
+ 	gcr_prompt_set_message (GCR_PROMPT (prompt), "This is the message");
+ 	gcr_prompt_set_description (GCR_PROMPT (prompt), "This is the description");
+ 
++#if defined (GDK_WINDOWING_X11)
+ 	caller_id = g_strdup_printf ("%lu", (gulong)GDK_WINDOW_XID (gtk_widget_get_window (parent)));
++#elif defined (GDK_WINDOWING_WAYLAND)
++	caller_id = g_strdup_printf ("%lu", (gulong)gdk_wayland_window_get_wl_surface (gtk_widget_get_window (parent)));
++#endif
+ 	gcr_prompt_set_caller_window (GCR_PROMPT (prompt), caller_id);
+ 	g_free (caller_id);
+ 
+Index: gcr-3.20.0/ui/gcr-prompt-dialog.c
+===================================================================
+--- gcr-3.20.0.orig/ui/gcr-prompt-dialog.c
++++ gcr-3.20.0/ui/gcr-prompt-dialog.c
+@@ -27,7 +27,11 @@
+ #include "gcr-secure-entry-buffer.h"
+ 
+ #include <gtk/gtk.h>
++#if defined (GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
+ #include <glib/gi18n.h>
+ 
+ /**
+@@ -148,7 +152,30 @@ update_transient_for (GcrPromptDialog *s
+ 	}
+ 
+ 	display = gtk_widget_get_display (GTK_WIDGET (self));
++#if defined (GDK_WINDOWING_X11)
+ 	transient_for = gdk_x11_window_foreign_new_for_display (display, (Window)handle);
++#elif defined (GDK_WINDOWING_WAYLAND)
++	{
++	  GdkWindowAttr attr;
++	  int event_mask= 0;
++	  const GdkRectangle *position =NULL;
++
++	  g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
++	  g_return_val_if_fail (position != NULL, NULL);
++	  
++	  attr.event_mask = event_mask;
++	  attr.wclass = GDK_INPUT_OUTPUT;
++	  attr.x = position->x;
++	  attr.y = position->y;
++	  attr.width = position->width;
++	  attr.height = position->height;
++	  attr.window_type = GDK_WINDOW_SUBSURFACE;
++	  
++	  transient_for = gdk_window_new (display,
++				 gdk_screen_get_root_window (gdk_display_get_default_screen (display)),
++				 &attr);
++	}
++#endif
+ 	if (transient_for == NULL) {
+ 		g_warning ("caller-window property doesn't represent a window on current display: %s",
+ 		           self->pv->caller_window);
+Index: gcr-3.20.0/ui/gcr-prompter-tool.c
+===================================================================
+--- gcr-3.20.0.orig/ui/gcr-prompter-tool.c
++++ gcr-3.20.0/ui/gcr-prompter-tool.c
+@@ -27,7 +27,12 @@
+ 
+ #include <glib/gi18n.h>
+ #include <gtk/gtk.h>
++#if defined (GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
++#elif defined (GDK_WINDOWING_WAYLAND)
++#include <gdk/gdkwayland.h>
++#endif
++
+ #include <pango/pango.h>
+ 
+ #include <locale.h>
