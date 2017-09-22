@@ -15,6 +15,15 @@ This layer depends on:
   layers: meta
   branch: master
 
+Setup
+=====
+
+$ git clone git://git.openembedded.org/openembedded-core oe-core
+$ cd oe-core
+$ git clone git://git.openembedded.org/bitbake
+$ git clone git://git.openembedded.org/meta-openembedded
+$ git clone https://github.com/aragua/meta-coerd.git
+
 Patches
 =======
 
