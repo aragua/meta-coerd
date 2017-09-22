@@ -1,7 +1,7 @@
 SUMMARY = "Systemd network configuration"
 DESCRIPTION = "Scripts and configuration files to set up networking on server."
 SECTION = "console/network"
-LICENSE="none"
+LICENSE="CLOSED"
 
 REQUIRED_DISTRO_FEATURES = "systemd"
 
