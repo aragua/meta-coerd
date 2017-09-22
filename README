@@ -1,0 +1,21 @@
+This README file contains information on the contents of the
+meta-nas layer.
+
+Please see the corresponding sections below for details.
+
+Dependencies
+============
+
+This layer depends on:
+
+  URI: git://git.openembedded.org/bitbake
+  branch: master
+
+  URI: git://git.openembedded.org/openembedded-core
+  layers: meta
+  branch: master
+
+Patches
+=======
+
+Maintainer: Fabien Lahoudere <fabien.lahoudere@collabora.co.uk>
