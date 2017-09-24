@@ -23,7 +23,7 @@ IMAGE_INSTALL += "netconfig"
 REQUIRED_DISTRO_FEATURES = "wayland"
 IMAGE_INSTALL += "weston weston-init weston-examples gtk+3-demo clutter-1.0-examples"
 
-IMAGE_INSTALL += "gtk+3-dbg"
+#IMAGE_INSTALL += "gtk+3-dbg"
 
 IMAGE_INSTALL += "epiphany "
 IMAGE_INSTALL += "evince "
